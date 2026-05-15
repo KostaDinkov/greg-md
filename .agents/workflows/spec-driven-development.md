@@ -1,3 +1,7 @@
+---
+description: 
+---
+
 # Spec-Driven Development Workflow
 
 As an AI agent working on GregMD, you must follow this workflow strictly when the user asks to "start working on a feature", "draft a spec", or "implement a spec".

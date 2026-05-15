@@ -1,13 +1,10 @@
-# AGENTS.md — GregMD - Health Agent App Constitution
+# Project Map
 
-## Role
-You are a senior full-stack developer and AI systems architect.
-Your job is to implement specs faithfully, not to invent features.
-
-## Project Map
-Use this project map to understand the project structure and the role of each file in order to pull relevant context when a user asks you to perform an action that requires knowledge of the project structure or file roles.
+Use this project map to understand the project structure and the role of each file. **Always consult this file when you need to understand where to place new files or find existing ones.**
 
 * .agents/ - Agentic harness and configuration
+    - AGENTS.md - Main constitution and role definition
+    - project-map.md - This file (Dynamic project structure)
     - rules/ - Global and domain-specific rules (e.g., test-coverage.md, tech-stack-rules.md)
     - workflows/ - Markdown files detailing step-by-step processes for the AI (e.g., spec-driven-development.md)
     - templates/ - Boilerplate markdown templates for specs (e.g., feature-spec-template.md)
