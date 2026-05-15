@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from typing import List
 
-from database import engine, get_session
+from database import get_session
+from .config import settings
 from models import LabReport, LabResult
 from services.pdf_service import PDFService
 from services.extraction_agent import extraction_agent
@@ -90,3 +91,7 @@ async def get_lab_results(session: Session = Depends(get_session)):
     # Note: In a real app we would filter by user_id
     results = session.exec(select(LabResult).order_by(LabResult.test_date.desc())).all()
     return results
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host=settings.api_host, port=settings.api_port, reload=True)

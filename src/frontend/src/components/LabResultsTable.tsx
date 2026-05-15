@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface LabResult {
   id: number;
@@ -31,7 +32,7 @@ export function LabResultsTable() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/labs/results");
+        const response = await fetch(`${API_BASE_URL}/labs/results`);
         if (response.ok) {
           const data = await response.json();
           setResults(data);

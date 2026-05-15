@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export function UploadLabForm() {
   const [file, setFile] = useState<File | null>(null);
@@ -29,7 +30,7 @@ export function UploadLabForm() {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8089/api/v1/labs/upload", {
+      const response = await fetch(`${API_BASE_URL}/labs/upload`, {
         method: "POST",
         body: formData,
       });
