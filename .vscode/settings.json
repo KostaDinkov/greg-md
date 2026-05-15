@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "src/backend/.venv/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "src/backend"
+    ],
+    "python.autoComplete.extraPaths": [
+        "src/backend"
+    ],
+    "python.envFile": "${workspaceFolder}/src/backend/.env",
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}\\src\\backend"
+    }
+}
