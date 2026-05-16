@@ -34,12 +34,14 @@ Process:
    - Next agent and expected output
 
 Phase 0: Git Branch Creation (for new features only)
+
 - Check current branch: `git branch --show-current`
 - If on `main` and no feature branch exists: create `feature/{feature-name}` branch
 - All subsequent work happens in the feature branch
 - Skip this phase if already on a feature branch or resuming existing work
 
 Phase 4: Completion Reporting + Pull Request
+
 - `reviewer` agent generates completion report
 - After completion report, create PR from feature branch to `main`:
   - PR title: "Feature: {Feature Name}"
