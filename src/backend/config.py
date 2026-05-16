@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # AI settings
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    use_dummy_llm: bool = False
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

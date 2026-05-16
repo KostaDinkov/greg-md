@@ -6,7 +6,8 @@ from unittest.mock import Mock, patch
 from services.extraction_agent import (
     BiomarkerResult,
     LabExtractionResponse,
-    extraction_agent,
+    extract_from_pdf,
+    _dummy_extraction_response,
 )
 
 
@@ -78,13 +79,47 @@ class TestLabExtractionResponseModel:
         assert len(response.results) == 0
 
 
-class TestExtractionAgent:
-    """Test the extraction agent with mocked LLM responses."""
+class TestDummyExtraction:
+    """Test the dummy extraction mode (USE_DUMMY_LLM=True)."""
 
-    @patch("services.extraction_agent.extraction_agent.run_sync")
-    def test_extraction_agent_success(self, mock_run_sync):
-        """Test successful extraction with mocked LLM response."""
-        # Mock the LLM response
+    def test_dummy_response_structure(self):
+        """Test that the dummy response contains expected fields."""
+        response = _dummy_extraction_response()
+        assert isinstance(response, LabExtractionResponse)
+        assert response.test_date is not None
+        assert response.lab_name is not None
+        assert len(response.results) > 0
+
+    def test_dummy_response_biomarkers_are_valid(self):
+        """Test that dummy biomarkers conform to the schema."""
+        response = _dummy_extraction_response()
+        for biomarker in response.results:
+            assert isinstance(biomarker, BiomarkerResult)
+            assert biomarker.name
+            assert biomarker.value is not None
+            assert biomarker.unit
+
+    @patch("services.extraction_agent.settings")
+    def test_extract_from_pdf_uses_dummy_when_flag_is_true(self, mock_settings):
+        """Test that extract_from_pdf returns dummy data when use_dummy_llm=True."""
+        mock_settings.use_dummy_llm = True
+        pdf_bytes = b"%PDF-1.4 fake pdf content"
+
+        result = extract_from_pdf(pdf_bytes)
+
+        assert isinstance(result, LabExtractionResponse)
+        assert len(result.results) > 0
+        # Verify no real LLM was called by checking known dummy values
+        assert result.lab_name == "Demo Diagnostics"
+
+    @patch("services.extraction_agent.settings")
+    @patch("services.extraction_agent._extraction_agent.run_sync")
+    def test_extract_from_pdf_calls_llm_when_flag_is_false(
+        self, mock_run_sync, mock_settings
+    ):
+        """Test that extract_from_pdf calls the LLM agent when use_dummy_llm=False."""
+        mock_settings.use_dummy_llm = False
+
         mock_result = Mock()
         mock_result.data = LabExtractionResponse(
             test_date=date(2024, 1, 15),
@@ -96,71 +131,42 @@ class TestExtractionAgent:
                     unit="g/dL",
                     reference_range="13.5-17.5",
                     is_flagged=False,
-                ),
-                BiomarkerResult(
-                    name="Vitamin D",
-                    value=22.0,
-                    unit="ng/mL",
-                    reference_range="30-100",
-                    is_flagged=True,
-                ),
-            ],
-        )
-        mock_run_sync.return_value = mock_result
-
-        # Call the agent
-        sample_text = "Lab Report\nDate: 01/15/2024\nHemoglobin: 15.5 g/dL"
-        result = extraction_agent.run_sync(sample_text)
-
-        # Verify
-        assert result.data.test_date == date(2024, 1, 15)
-        assert len(result.data.results) == 2
-        assert result.data.results[0].name == "Hemoglobin"
-        assert result.data.results[1].is_flagged is True
-        mock_run_sync.assert_called_once_with(sample_text)
-
-    @patch("services.extraction_agent.extraction_agent.run_sync")
-    def test_extraction_agent_missing_fields(self, mock_run_sync):
-        """Test extraction with missing optional fields."""
-        mock_result = Mock()
-        mock_result.data = LabExtractionResponse(
-            test_date=date(2024, 2, 10),
-            results=[
-                BiomarkerResult(
-                    name="TSH",
-                    value=3.2,
-                    unit="mIU/L",
                 )
             ],
         )
         mock_run_sync.return_value = mock_result
 
-        sample_text = "TSH: 3.2 mIU/L on 02/10/2024"
-        result = extraction_agent.run_sync(sample_text)
+        pdf_bytes = b"%PDF-1.4 fake pdf content"
+        result = extract_from_pdf(pdf_bytes)
 
-        assert len(result.data.results) == 1
-        assert result.data.results[0].reference_range is None
-        assert result.data.results[0].is_flagged is None
+        mock_run_sync.assert_called_once()
+        assert result.lab_name == "LabCorp"
+        assert len(result.results) == 1
+        assert result.results[0].name == "Hemoglobin"
 
-    @patch("services.extraction_agent.extraction_agent.run_sync")
-    def test_extraction_agent_invalid_date(self, mock_run_sync):
-        """Test that invalid date raises appropriate error."""
-        # Simulate an exception from the LLM
-        mock_run_sync.side_effect = Exception("Invalid date format")
+    @patch("services.extraction_agent.settings")
+    @patch("services.extraction_agent._extraction_agent.run_sync")
+    def test_extract_from_pdf_does_not_call_llm_in_dummy_mode(
+        self, mock_run_sync, mock_settings
+    ):
+        """Test that the real LLM agent is never called when use_dummy_llm=True."""
+        mock_settings.use_dummy_llm = True
 
-        sample_text = "Invalid lab report text"
-        with pytest.raises(Exception) as exc_info:
-            extraction_agent.run_sync(sample_text)
+        pdf_bytes = b"%PDF-1.4 fake pdf content"
+        extract_from_pdf(pdf_bytes)
 
-        assert "Invalid date format" in str(exc_info.value)
+        mock_run_sync.assert_not_called()
 
-    @patch("services.extraction_agent.extraction_agent.run_sync")
-    def test_extraction_agent_malformed_data(self, mock_run_sync):
-        """Test extraction with malformed/incomplete data."""
-        mock_run_sync.side_effect = ValueError("Could not parse lab report")
+    @patch("services.extraction_agent.settings")
+    @patch("services.extraction_agent._extraction_agent.run_sync")
+    def test_extract_from_pdf_propagates_llm_errors(
+        self, mock_run_sync, mock_settings
+    ):
+        """Test that LLM errors propagate correctly when not in dummy mode."""
+        mock_settings.use_dummy_llm = False
+        mock_run_sync.side_effect = Exception("LLM API error")
 
-        sample_text = "This is not a lab report"
-        with pytest.raises(ValueError) as exc_info:
-            extraction_agent.run_sync(sample_text)
+        pdf_bytes = b"%PDF-1.4 fake pdf content"
+        with pytest.raises(Exception, match="LLM API error"):
+            extract_from_pdf(pdf_bytes)
 
-        assert "Could not parse lab report" in str(exc_info.value)

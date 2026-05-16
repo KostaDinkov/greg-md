@@ -5,13 +5,13 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 from datetime import date
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 import io
 
 from main import app
 from database import get_session
 from models import LabReport, LabResult
-from services.extraction_agent import LabExtractionResponse, BiomarkerResult
+from services.extraction_agent import LabExtractionResponse, BiomarkerResult, extract_from_pdf
 
 
 @pytest.fixture(name="session")
@@ -66,18 +66,13 @@ class TestHealthEndpoint:
 class TestUploadEndpoint:
     """Test the POST /api/v1/labs/upload endpoint."""
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_upload_pdf_success(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
         """Test successful PDF upload and processing."""
-        # Mock PDF text extraction
-        mock_pdf_service.return_value = "Lab Report\nHemoglobin: 15.5 g/dL"
-
-        # Mock AI extraction
-        mock_result = Mock()
-        mock_result.data = LabExtractionResponse(
+        # Mock extraction to return structured data directly
+        mock_extract.return_value = LabExtractionResponse(
             test_date=date(2024, 1, 15),
             lab_name="Quest",
             results=[
@@ -90,7 +85,6 @@ class TestUploadEndpoint:
                 )
             ],
         )
-        mock_agent.return_value = mock_result
 
         # Create a test PDF
         pdf_bytes = create_sample_pdf_bytes()
@@ -126,17 +120,13 @@ class TestUploadEndpoint:
 
         assert response.status_code == 422  # Unprocessable Entity
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_upload_extraction_failure(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
         """Test that extraction failure updates report status to 'failed'."""
-        # Mock PDF extraction
-        mock_pdf_service.return_value = "Invalid lab report text"
-
-        # Mock AI extraction to raise an error
-        mock_agent.side_effect = Exception("Could not parse lab report")
+        # Mock extraction to raise an error
+        mock_extract.side_effect = Exception("Could not parse lab report")
 
         # Create a test PDF
         pdf_bytes = create_sample_pdf_bytes()
@@ -285,16 +275,12 @@ class TestResultsEndpoint:
 class TestDatabasePersistence:
     """Test that extracted data is correctly persisted to the database."""
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_database_persistence_after_extraction(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
         """Test that successful extraction persists data to database."""
-        # Mock extraction
-        mock_pdf_service.return_value = "Lab text"
-        mock_result = Mock()
-        mock_result.data = LabExtractionResponse(
+        mock_extract.return_value = LabExtractionResponse(
             test_date=date(2024, 2, 10),
             lab_name="LabCorp",
             results=[
@@ -306,7 +292,6 @@ class TestDatabasePersistence:
                 ),
             ],
         )
-        mock_agent.return_value = mock_result
 
         # Upload
         pdf_bytes = create_sample_pdf_bytes()
@@ -330,23 +315,16 @@ class TestDatabasePersistence:
 class TestErrorHandling:
     """Test error handling and polite error messages."""
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_upload_malformed_pdf_stores_error_message(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
-        """Test that malformed PDF extraction failure stores a polite error message."""
-        # Mock PDF extraction
-        mock_pdf_service.return_value = "This is not a lab report"
-
-        # Mock AI extraction to return empty results
-        mock_result = Mock()
-        mock_result.data = LabExtractionResponse(
+        """Test that empty extraction results stores a polite error message."""
+        mock_extract.return_value = LabExtractionResponse(
             test_date=date(2024, 1, 15),
             lab_name=None,
             results=[],  # No biomarkers found
         )
-        mock_agent.return_value = mock_result
 
         # Upload
         pdf_bytes = create_sample_pdf_bytes()
@@ -370,14 +348,12 @@ class TestErrorHandling:
         assert "couldn't find any lab results" in report.error_message
         assert "medical lab report" in report.error_message
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_pdf_parsing_error_stores_polite_message(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
-        """Test that PDF parsing errors produce polite error messages."""
-        # Mock PDF extraction to raise parsing error
-        mock_pdf_service.side_effect = Exception("PDF parsing failed - corrupted file")
+        """Test that extraction failures produce polite error messages."""
+        mock_extract.side_effect = Exception("extraction failed")
 
         # Upload
         pdf_bytes = create_sample_pdf_bytes()
@@ -398,19 +374,14 @@ class TestErrorHandling:
         report = session.get(LabReport, report_id)
         assert report.status == "failed"
         assert report.error_message is not None
-        assert "corrupted or unreadable" in report.error_message
+        assert "trouble processing" in report.error_message
 
-    @patch("main.PDFService.extract_text_from_bytes")
-    @patch("main.extraction_agent.run_sync")
+    @patch("main.extract_from_pdf")
     def test_generic_extraction_failure_stores_polite_message(
-        self, mock_agent, mock_pdf_service, client: TestClient, session: Session
+        self, mock_extract, client: TestClient, session: Session
     ):
         """Test that generic extraction failures produce polite error messages."""
-        # Mock PDF extraction
-        mock_pdf_service.return_value = "Some text"
-
-        # Mock AI extraction to raise generic error
-        mock_agent.side_effect = Exception("Unknown extraction error")
+        mock_extract.side_effect = Exception("Unknown extraction error")
 
         # Upload
         pdf_bytes = create_sample_pdf_bytes()
