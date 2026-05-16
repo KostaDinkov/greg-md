@@ -6,8 +6,7 @@ from typing import List
 from database import get_session
 from config import settings
 from models import LabReport, LabResult
-from services.pdf_service import PDFService
-from services.extraction_agent import extraction_agent
+from services.extraction_agent import extract_from_pdf
 
 app = FastAPI(title="GregMD API")
 
@@ -31,15 +30,8 @@ async def health_check():
 
 async def process_lab_report(report_id: int, file_bytes: bytes, session: Session):
     report = session.get(LabReport, report_id)
-    extraction_data = None
     try:
-        # Extract text
-        text = PDFService.extract_text_from_bytes(file_bytes)
-
-        # Run AI extraction synchronously in the background task
-        # Using pydantic_ai Agent
-        result = extraction_agent.run_sync(text)
-        extraction_data = result.data
+        extraction_data = extract_from_pdf(file_bytes)
 
         # Check if we got any results
         if not extraction_data.results or len(extraction_data.results) == 0:
@@ -68,14 +60,7 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
     except Exception as e:
         if report:
             report.status = "failed"
-            # Determine appropriate error message based on exception type
-            error_str = str(e).lower()
-            if "pdf" in error_str and (
-                "corrupt" in error_str or "parse" in error_str or "parsing" in error_str
-            ):
-                report.error_message = "This PDF appears to be corrupted or unreadable. Please try uploading a different version."
-            else:
-                report.error_message = "We had trouble processing this report. Please ensure it contains standard lab test results."
+            report.error_message = "We had trouble processing this report. Please ensure it contains standard lab test results."
             session.commit()
         print(f"Extraction failed for report {report_id}: {e}")
 
