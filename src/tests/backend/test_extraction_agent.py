@@ -1,4 +1,5 @@
 """Tests for the extraction agent module."""
+
 import pytest
 from datetime import date
 from unittest.mock import Mock, patch
@@ -29,9 +30,7 @@ class TestBiomarkerResultModel:
 
     def test_biomarker_result_optional_fields(self):
         """Test BiomarkerResult with optional fields as None."""
-        result = BiomarkerResult(
-            name="Vitamin D", value=32.5, unit="ng/mL"
-        )
+        result = BiomarkerResult(name="Vitamin D", value=32.5, unit="ng/mL")
         assert result.reference_range is None
         assert result.is_flagged is None
 
@@ -68,18 +67,14 @@ class TestLabExtractionResponseModel:
         """Test LabExtractionResponse with optional lab_name as None."""
         response = LabExtractionResponse(
             test_date=date(2024, 2, 20),
-            results=[
-                BiomarkerResult(name="TSH", value=2.5, unit="mIU/L")
-            ],
+            results=[BiomarkerResult(name="TSH", value=2.5, unit="mIU/L")],
         )
         assert response.lab_name is None
         assert len(response.results) == 1
 
     def test_lab_extraction_response_empty_results(self):
         """Test LabExtractionResponse with empty results list."""
-        response = LabExtractionResponse(
-            test_date=date(2024, 3, 10), results=[]
-        )
+        response = LabExtractionResponse(test_date=date(2024, 3, 10), results=[])
         assert len(response.results) == 0
 
 

@@ -7,6 +7,7 @@ This directory contains sample files used for testing.
 - `sample-lab-report.pdf`: A sample lab report PDF for E2E testing
 
 To create a sample PDF for testing:
+
 1. Use a PDF creation tool or Python script
 2. Include sample biomarker data (e.g., Hemoglobin, Vitamin D, Glucose)
 3. Include a test date

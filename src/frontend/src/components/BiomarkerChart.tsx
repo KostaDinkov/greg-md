@@ -11,13 +11,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -58,13 +52,11 @@ export function BiomarkerChart() {
         if (response.ok) {
           const data: LabResult[] = await response.json();
           setResults(data);
-          
+
           // Extract unique biomarker names
-          const uniqueBiomarkers = Array.from(
-            new Set(data.map((r) => r.biomarker_name))
-          ).sort();
+          const uniqueBiomarkers = Array.from(new Set(data.map((r) => r.biomarker_name))).sort();
           setBiomarkers(uniqueBiomarkers);
-          
+
           // Select the first biomarker by default
           if (uniqueBiomarkers.length > 0 && !selectedBiomarker) {
             setSelectedBiomarker(uniqueBiomarkers[0]);
@@ -89,9 +81,7 @@ export function BiomarkerChart() {
       formattedDate: format(new Date(r.test_date), "MMM d, yyyy"),
     }));
 
-  const selectedUnit = results.find(
-    (r) => r.biomarker_name === selectedBiomarker
-  )?.unit;
+  const selectedUnit = results.find((r) => r.biomarker_name === selectedBiomarker)?.unit;
 
   if (loading) {
     return (
@@ -107,9 +97,7 @@ export function BiomarkerChart() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Biomarker Trends</CardTitle>
-        <CardDescription>
-          Track how your biomarkers change over time
-        </CardDescription>
+        <CardDescription>Track how your biomarkers change over time</CardDescription>
       </CardHeader>
       <CardContent>
         {biomarkers.length === 0 ? (
@@ -122,10 +110,7 @@ export function BiomarkerChart() {
               <label htmlFor="biomarker-select" className="text-sm font-medium">
                 Select Biomarker:
               </label>
-              <Select
-                value={selectedBiomarker}
-                onValueChange={setSelectedBiomarker}
-              >
+              <Select value={selectedBiomarker} onValueChange={setSelectedBiomarker}>
                 <SelectTrigger id="biomarker-select" className="w-[250px]">
                   <SelectValue placeholder="Choose a biomarker" />
                 </SelectTrigger>

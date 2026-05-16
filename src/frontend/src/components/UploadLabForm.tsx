@@ -10,7 +10,9 @@ import { API_BASE_URL } from "@/lib/api";
 export function UploadLabForm() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">(
+    "idle",
+  );
   const [message, setMessage] = useState("");
   const [reportId, setReportId] = useState<number | null>(null);
 
@@ -57,7 +59,7 @@ export function UploadLabForm() {
 
     setIsUploading(true);
     setStatus("uploading");
-    
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -89,29 +91,42 @@ export function UploadLabForm() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Upload Lab Report</CardTitle>
-        <CardDescription>Upload a PDF of your blood work or hormone panel to extract the biomarkers.</CardDescription>
+        <CardDescription>
+          Upload a PDF of your blood work or hormone panel to extract the biomarkers.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-4">
           <div className="flex items-center gap-4">
-            <Input 
-              type="file" 
-              accept=".pdf" 
+            <Input
+              type="file"
+              accept=".pdf"
               onChange={handleFileChange}
               disabled={isUploading || status === "processing"}
             />
-            <Button onClick={handleUpload} disabled={!file || isUploading || status === "processing"}>
-              {isUploading ? "Uploading..." : status === "processing" ? "Processing..." : <><UploadCloud className="mr-2 h-4 w-4" /> Upload</>}
+            <Button
+              onClick={handleUpload}
+              disabled={!file || isUploading || status === "processing"}
+            >
+              {isUploading ? (
+                "Uploading..."
+              ) : status === "processing" ? (
+                "Processing..."
+              ) : (
+                <>
+                  <UploadCloud className="mr-2 h-4 w-4" /> Upload
+                </>
+              )}
             </Button>
           </div>
-          
+
           {(status === "success" || status === "processing") && (
             <div className="flex items-center text-sm text-green-600 bg-green-50 p-3 rounded-md">
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {message}
             </div>
           )}
-          
+
           {status === "error" && (
             <div className="flex items-center text-sm text-red-600 bg-red-50 p-3 rounded-md">
               <AlertCircle className="mr-2 h-4 w-4" />

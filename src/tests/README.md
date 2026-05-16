@@ -65,6 +65,7 @@ npm run test:e2e
 ## Test Coverage
 
 ### Backend (30 tests)
+
 - **API Endpoints:** 11 tests
   - Health check
   - Upload (success, errors, validation)
@@ -80,6 +81,7 @@ npm run test:e2e
   - Edge cases
 
 ### Frontend (33 tests)
+
 - **UploadLabForm:** 8 tests
   - File selection
   - Upload flow
@@ -94,6 +96,7 @@ npm run test:e2e
   - Time series display
 
 ### E2E (8 scenarios)
+
 - Complete upload flow
 - Form validation
 - API integration
@@ -147,11 +150,13 @@ npx playwright test --debug
 If you see `Cannot find module 'react/jsx-runtime'`:
 
 **Solution 1:** Install SWC transformer
+
 ```bash
 npm install --save-dev @swc/jest @swc/core
 ```
 
 **Solution 2:** Add to package.json
+
 ```json
 "jest": {
   "testEnvironmentOptions": {
@@ -176,6 +181,7 @@ python -c "import sys; print(sys.path)"
 ### E2E Tests: Connection Refused
 
 Ensure both servers are running:
+
 ```bash
 # Backend should be on http://localhost:8000
 curl http://localhost:8000/api/v1/health
@@ -200,7 +206,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install dependencies
         run: |
           cd src/backend
@@ -216,7 +222,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Install dependencies
         run: |
           cd src/frontend
@@ -245,15 +251,18 @@ jobs:
 ## Test Data
 
 ### Sample PDF
+
 Located at `src/tests/fixtures/sample-lab-report.pdf`
 
-**Regenerate:** 
+**Regenerate:**
+
 ```bash
 cd src/tests/fixtures
 python generate_sample_pdf.py
 ```
 
 **Contents:**
+
 - Date: January 15, 2024
 - Lab: Quest Diagnostics
 - 6 biomarkers: Hemoglobin, Vitamin D, Glucose, Cholesterol, TSH, Vitamin B12
@@ -261,6 +270,7 @@ python generate_sample_pdf.py
 ## Best Practices
 
 1. **Run tests before committing**
+
    ```bash
    cd src/backend && pytest ../tests/backend/ -v
    cd src/frontend && npm test
@@ -295,6 +305,7 @@ python generate_sample_pdf.py
 ## Support
 
 For questions or issues with tests:
+
 1. Check test output for specific error messages
 2. Review PHASE3_HANDOFF.md for known issues
 3. Ensure all dependencies are installed

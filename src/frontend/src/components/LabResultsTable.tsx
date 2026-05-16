@@ -63,7 +63,7 @@ export function LabResultsTable() {
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
       // Toggle direction
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       // New column, default to ascending
       setSortColumn(column);
@@ -75,14 +75,16 @@ export function LabResultsTable() {
     if (sortColumn !== column) {
       return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     }
-    return sortDirection === "asc" 
-      ? <ArrowUp className="ml-2 h-4 w-4" />
-      : <ArrowDown className="ml-2 h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4" />
+    );
   };
 
   const sortedResults = [...results].sort((a, b) => {
     let comparison = 0;
-    
+
     switch (sortColumn) {
       case "test_date":
         comparison = new Date(a.test_date).getTime() - new Date(b.test_date).getTime();
@@ -117,7 +119,7 @@ export function LabResultsTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer select-none hover:bg-muted/50"
                   onClick={() => handleSort("test_date")}
                 >
@@ -126,7 +128,7 @@ export function LabResultsTable() {
                     {getSortIcon("test_date")}
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer select-none hover:bg-muted/50"
                   onClick={() => handleSort("biomarker_name")}
                 >
@@ -135,7 +137,7 @@ export function LabResultsTable() {
                     {getSortIcon("biomarker_name")}
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer select-none hover:bg-muted/50"
                   onClick={() => handleSort("value")}
                 >
@@ -145,7 +147,7 @@ export function LabResultsTable() {
                   </div>
                 </TableHead>
                 <TableHead>Range</TableHead>
-                <TableHead 
+                <TableHead
                   className="cursor-pointer select-none hover:bg-muted/50"
                   onClick={() => handleSort("is_flagged")}
                 >
@@ -162,7 +164,8 @@ export function LabResultsTable() {
                   <TableCell>{format(new Date(result.test_date), "MMM d, yyyy")}</TableCell>
                   <TableCell className="font-medium">{result.biomarker_name}</TableCell>
                   <TableCell>
-                    {result.value} <span className="text-muted-foreground text-xs">{result.unit}</span>
+                    {result.value}{" "}
+                    <span className="text-muted-foreground text-xs">{result.unit}</span>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {result.reference_range || "-"}
@@ -171,7 +174,9 @@ export function LabResultsTable() {
                     {result.is_flagged ? (
                       <Badge variant="destructive">Flagged</Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">Normal</Badge>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Normal
+                      </Badge>
                     )}
                   </TableCell>
                 </TableRow>

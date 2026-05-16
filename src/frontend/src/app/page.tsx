@@ -9,7 +9,8 @@ export default function Home() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">GregMD Dashboard</h1>
           <p className="text-lg text-slate-500 mt-2">
-            Your personal health AI agent. Upload labs to automatically extract and track your biomarkers.
+            Your personal health AI agent. Upload labs to automatically extract and track your
+            biomarkers.
           </p>
         </div>
 

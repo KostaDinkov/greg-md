@@ -11,3 +11,6 @@
 -do we need a skill for project setup and e2e test execution?
 
 - the frontend tests are placed outside the frontend directory, so the module imports are not working imo, can you confirm.
+
+- starting a work on a new feature should be done in a new git branch.
+- on completion of phase 4 by the reviewer, a PR should be created from the feature branch to main with the summary provided in the phase 4 report. This allows for code review and merging, as well as providing a clear history of changes related to the feature.

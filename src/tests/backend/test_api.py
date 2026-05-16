@@ -1,4 +1,5 @@
 """Tests for the FastAPI endpoints."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
@@ -29,6 +30,7 @@ def session_fixture():
 @pytest.fixture(name="client")
 def client_fixture(session: Session):
     """Create a test client with overridden database session."""
+
     def get_session_override():
         return session
 
@@ -357,6 +359,7 @@ class TestErrorHandling:
         # Trigger the background task synchronously by calling process_lab_report directly
         import asyncio
         from main import process_lab_report
+
         asyncio.run(process_lab_report(report_id, pdf_bytes, session))
 
         # Verify report has failed status and error message
@@ -387,6 +390,7 @@ class TestErrorHandling:
         # Trigger the background task
         import asyncio
         from main import process_lab_report
+
         asyncio.run(process_lab_report(report_id, pdf_bytes, session))
 
         # Verify error message
@@ -419,6 +423,7 @@ class TestErrorHandling:
         # Trigger the background task
         import asyncio
         from main import process_lab_report
+
         asyncio.run(process_lab_report(report_id, pdf_bytes, session))
 
         # Verify error message
@@ -436,7 +441,7 @@ class TestErrorHandling:
         report = LabReport(
             filename="failed.pdf",
             status="failed",
-            error_message="We couldn't find any lab results in this document."
+            error_message="We couldn't find any lab results in this document.",
         )
         session.add(report)
         session.commit()
@@ -448,7 +453,10 @@ class TestErrorHandling:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "failed"
-        assert data["error_message"] == "We couldn't find any lab results in this document."
+        assert (
+            data["error_message"]
+            == "We couldn't find any lab results in this document."
+        )
 
     def test_status_endpoint_returns_null_error_for_successful_reports(
         self, client: TestClient, session: Session
@@ -465,4 +473,3 @@ class TestErrorHandling:
         data = response.json()
         assert data["status"] == "complete"
         assert data["error_message"] is None
-

@@ -23,11 +23,25 @@ Use this project map to understand the project structure and the role of each fi
             - data-model.md
 * src/ - source code root
     - frontend/ - Next.js application code
+        - src/ - Next.js source files
+            - app/ - Next.js App Router pages
+            - components/ - React components
+            - __tests__/ - Frontend component tests (Jest + React Testing Library)
+            - lib/ - Utility functions and API clients
+        - public/ - Static assets
+        - package.json - Frontend dependencies
+        - jest.config.ts - Jest test configuration
+        - playwright.config.ts - E2E test configuration
     - backend/ - Python FastAPI / Pydantic AI service
-* tests/ - test root
-    - frontend/
-    - backend/
-    - e2e/
+        - services/ - Business logic and AI agents
+        - migrations/ - Alembic database migrations
+        - models.py - SQLModel database models
+        - main.py - FastAPI application entry point
+        - requirements.txt - Python dependencies
+* tests/ - centralized test root
+    - backend/ - Backend unit and integration tests (pytest)
+    - e2e/ - End-to-end tests (Playwright, can also be in src/frontend/)
+    - fixtures/ - Shared test data and sample files
 * data/ - test fixtures, sample lab PDFs, and mock wearable data for development
 * docker/ - Dockerfiles and container configurations
 * docker-compose.yml - Local development orchestration

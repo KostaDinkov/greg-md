@@ -13,15 +13,21 @@ app = FastAPI(title="GregMD API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://192.168.1.225:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.1.225:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 @app.get("/api/v1/health")
 async def health_check():
     return {"status": "ok"}
+
 
 async def process_lab_report(report_id: int, file_bytes: bytes, session: Session):
     report = session.get(LabReport, report_id)
@@ -29,12 +35,12 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
     try:
         # Extract text
         text = PDFService.extract_text_from_bytes(file_bytes)
-        
+
         # Run AI extraction synchronously in the background task
         # Using pydantic_ai Agent
         result = extraction_agent.run_sync(text)
         extraction_data = result.data
-        
+
         # Check if we got any results
         if not extraction_data.results or len(extraction_data.results) == 0:
             if report:
@@ -42,7 +48,7 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
                 report.error_message = "We couldn't find any lab results in this document. Please ensure it's a medical lab report with biomarker data."
                 session.commit()
             return
-        
+
         # Save results to DB
         for item in extraction_data.results:
             lab_result = LabResult(
@@ -52,10 +58,10 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
                 unit=item.unit,
                 reference_range=item.reference_range,
                 is_flagged=item.is_flagged,
-                test_date=extraction_data.test_date
+                test_date=extraction_data.test_date,
             )
             session.add(lab_result)
-        
+
         # Update report status
         report.status = "complete"
         session.commit()
@@ -64,34 +70,42 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
             report.status = "failed"
             # Determine appropriate error message based on exception type
             error_str = str(e).lower()
-            if "pdf" in error_str and ("corrupt" in error_str or "parse" in error_str or "parsing" in error_str):
+            if "pdf" in error_str and (
+                "corrupt" in error_str or "parse" in error_str or "parsing" in error_str
+            ):
                 report.error_message = "This PDF appears to be corrupted or unreadable. Please try uploading a different version."
             else:
                 report.error_message = "We had trouble processing this report. Please ensure it contains standard lab test results."
             session.commit()
         print(f"Extraction failed for report {report_id}: {e}")
 
+
 @app.post("/api/v1/labs/upload")
 async def upload_lab(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
 ):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
-        
+
     file_bytes = await file.read()
-    
+
     # Create the report record
     report = LabReport(filename=file.filename, status="processing")
     session.add(report)
     session.commit()
     session.refresh(report)
-    
+
     # Kick off background extraction
     background_tasks.add_task(process_lab_report, report.id, file_bytes, session)
-    
-    return {"report_id": report.id, "status": report.status, "message": "File uploaded and processing started."}
+
+    return {
+        "report_id": report.id,
+        "status": report.status,
+        "message": "File uploaded and processing started.",
+    }
+
 
 @app.get("/api/v1/labs/{report_id}/status")
 async def get_lab_status(report_id: int, session: Session = Depends(get_session)):
@@ -99,10 +113,11 @@ async def get_lab_status(report_id: int, session: Session = Depends(get_session)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return {
-        "report_id": report.id, 
+        "report_id": report.id,
         "status": report.status,
-        "error_message": report.error_message
+        "error_message": report.error_message,
     }
+
 
 @app.get("/api/v1/labs/results", response_model=List[LabResult])
 async def get_lab_results(session: Session = Depends(get_session)):
@@ -110,6 +125,8 @@ async def get_lab_results(session: Session = Depends(get_session)):
     results = session.exec(select(LabResult).order_by(LabResult.test_date.desc())).all()
     return results
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host=settings.api_host, port=settings.api_port, reload=True)

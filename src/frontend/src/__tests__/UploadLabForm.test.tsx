@@ -1,56 +1,56 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { UploadLabForm } from '@/components/UploadLabForm';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { UploadLabForm } from "@/components/UploadLabForm";
 
 // Mock the fetch API
 global.fetch = jest.fn();
 
-describe('UploadLabForm', () => {
+describe("UploadLabForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders the upload form with all elements', () => {
+  it("renders the upload form with all elements", () => {
     render(<UploadLabForm />);
-    
-    expect(screen.getByText('Upload Lab Report')).toBeInTheDocument();
+
+    expect(screen.getByText("Upload Lab Report")).toBeInTheDocument();
     expect(screen.getByText(/Upload a PDF of your blood work/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /upload/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /upload/i })).toBeInTheDocument();
   });
 
-  it('upload button is disabled when no file is selected', () => {
+  it("upload button is disabled when no file is selected", () => {
     render(<UploadLabForm />);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     expect(uploadButton).toBeDisabled();
   });
 
-  it('upload button is enabled after file selection', async () => {
+  it("upload button is enabled after file selection", async () => {
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     expect(uploadButton).not.toBeDisabled();
   });
 
-  it('displays success message after successful upload', async () => {
+  it("displays success message after successful upload", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 1, status: 'processing', message: 'Success' }),
+      json: async () => ({ report_id: 1, status: "processing", message: "Success" }),
     });
 
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     await waitFor(() => {
@@ -58,20 +58,20 @@ describe('UploadLabForm', () => {
     });
   });
 
-  it('displays error message when upload fails', async () => {
+  it("displays error message when upload fails", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ detail: 'Upload failed' }),
+      json: async () => ({ detail: "Upload failed" }),
     });
 
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     await waitFor(() => {
@@ -79,17 +79,17 @@ describe('UploadLabForm', () => {
     });
   });
 
-  it('displays error message on network error', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+  it("displays error message on network error", async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
 
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     await waitFor(() => {
@@ -97,26 +97,33 @@ describe('UploadLabForm', () => {
     });
   });
 
-  it('disables input and button while uploading', async () => {
+  it("disables input and button while uploading", async () => {
     (global.fetch as jest.Mock).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        ok: true,
-        json: async () => ({ report_id: 1, status: 'processing' }),
-      }), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: async () => ({ report_id: 1, status: "processing" }),
+              }),
+            100,
+          ),
+        ),
     );
 
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     // Check that button is disabled during upload
-    expect(screen.getByRole('button', { name: /uploading/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /uploading/i })).toBeDisabled();
     expect(input).toBeDisabled();
 
     // Wait for upload to complete
@@ -125,41 +132,41 @@ describe('UploadLabForm', () => {
     });
   });
 
-  it('sends correct API request on upload', async () => {
+  it("sends correct API request on upload", async () => {
     const mockFetch = global.fetch as jest.Mock;
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 1, status: 'processing' }),
+      json: async () => ({ report_id: 1, status: "processing" }),
     });
 
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/labs/upload'),
+        expect.stringContaining("/labs/upload"),
         expect.objectContaining({
-          method: 'POST',
+          method: "POST",
           body: expect.any(FormData),
-        })
+        }),
       );
     });
   });
 
-  it('polls status endpoint after upload and displays polite error message on failure', async () => {
+  it("polls status endpoint after upload and displays polite error message on failure", async () => {
     const mockFetch = global.fetch as jest.Mock;
-    
+
     // First call: successful upload
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 123, status: 'processing' }),
+      json: async () => ({ report_id: 123, status: "processing" }),
     });
 
     // Second call: status check returns failed with error message
@@ -167,20 +174,21 @@ describe('UploadLabForm', () => {
       ok: true,
       json: async () => ({
         report_id: 123,
-        status: 'failed',
-        error_message: "We couldn't find any lab results in this document. Please ensure it's a medical lab report with biomarker data."
+        status: "failed",
+        error_message:
+          "We couldn't find any lab results in this document. Please ensure it's a medical lab report with biomarker data.",
       }),
     });
 
     jest.useFakeTimers();
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     // Wait for upload to complete
@@ -201,13 +209,13 @@ describe('UploadLabForm', () => {
     jest.useRealTimers();
   });
 
-  it('polls status endpoint and displays success message when extraction completes', async () => {
+  it("polls status endpoint and displays success message when extraction completes", async () => {
     const mockFetch = global.fetch as jest.Mock;
-    
+
     // First call: successful upload
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 456, status: 'processing' }),
+      json: async () => ({ report_id: 456, status: "processing" }),
     });
 
     // Second call: status check returns complete
@@ -215,20 +223,20 @@ describe('UploadLabForm', () => {
       ok: true,
       json: async () => ({
         report_id: 456,
-        status: 'complete',
-        error_message: null
+        status: "complete",
+        error_message: null,
       }),
     });
 
     jest.useFakeTimers();
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     // Wait for upload to complete
@@ -247,30 +255,30 @@ describe('UploadLabForm', () => {
     jest.useRealTimers();
   });
 
-  it('stops polling when status becomes complete or failed', async () => {
+  it("stops polling when status becomes complete or failed", async () => {
     const mockFetch = global.fetch as jest.Mock;
-    
+
     // Upload succeeds
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 789, status: 'processing' }),
+      json: async () => ({ report_id: 789, status: "processing" }),
     });
 
     // Status check returns complete
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ report_id: 789, status: 'complete', error_message: null }),
+      json: async () => ({ report_id: 789, status: "complete", error_message: null }),
     });
 
     jest.useFakeTimers();
     render(<UploadLabForm />);
-    
-    const file = new File(['dummy content'], 'test-report.pdf', { type: 'application/pdf' });
+
+    const file = new File(["dummy content"], "test-report.pdf", { type: "application/pdf" });
     const input = screen.getByLabelText(/upload/i) as HTMLInputElement;
-    
+
     await userEvent.upload(input, file);
-    
-    const uploadButton = screen.getByRole('button', { name: /upload/i });
+
+    const uploadButton = screen.getByRole("button", { name: /upload/i });
     fireEvent.click(uploadButton);
 
     await waitFor(() => {

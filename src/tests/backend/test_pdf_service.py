@@ -1,4 +1,5 @@
 """Tests for the PDF service module."""
+
 import pytest
 from pathlib import Path
 import io
@@ -39,7 +40,7 @@ class TestPDFService:
         # Create an empty PDF
         writer = PdfWriter()
         writer.add_blank_page(width=612, height=792)
-        
+
         buffer = io.BytesIO()
         writer.write(buffer)
         buffer.seek(0)
@@ -58,15 +59,15 @@ class TestPDFService:
 
         buffer = io.BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
-        
+
         # Page 1
         c.drawString(100, 750, "Page 1: Hemoglobin: 15.5 g/dL")
         c.showPage()
-        
+
         # Page 2
         c.drawString(100, 750, "Page 2: Glucose: 95 mg/dL")
         c.save()
-        
+
         buffer.seek(0)
         pdf_bytes = buffer.read()
 
@@ -96,7 +97,7 @@ class TestPDFService:
         # Create a sample PDF file
         text_content = "Test Lab Report - TSH: 2.5 mIU/L"
         pdf_bytes = self.create_sample_pdf_bytes(text_content)
-        
+
         pdf_file = tmp_path / "test_report.pdf"
         pdf_file.write_bytes(pdf_bytes)
 
@@ -116,7 +117,7 @@ class TestPDFService:
         """Test extraction using pathlib.Path object."""
         text_content = "Pathlib Test - Vitamin D: 32 ng/mL"
         pdf_bytes = self.create_sample_pdf_bytes(text_content)
-        
+
         pdf_file = tmp_path / "pathlib_test.pdf"
         pdf_file.write_bytes(pdf_bytes)
 

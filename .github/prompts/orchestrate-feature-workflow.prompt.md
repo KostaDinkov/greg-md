@@ -18,18 +18,34 @@ Given a feature request, orchestrate work using these role agents:
 Process:
 
 1. Detect current state for the target feature by checking existing artifacts in `specs/`, `src/`, and tests.
-2. Identify the first incomplete phase:
+2. Check if working on `main` branch. If yes and starting new work, create feature branch first (Phase 0).
+3. Identify the first incomplete phase:
+   - Phase 0: Git branch creation (for new features)
    - Phase 1: Spec authoring
    - Phase 2: Implementation planning
    - Phase 3: Coding and testing
-   - Phase 4: Completion reporting
-3. Resume from that phase only; do not restart completed phases.
-4. Route to the corresponding role agent and request only phase-appropriate output.
-5. At each phase end, provide a short handoff packet:
+   - Phase 4: Completion reporting + PR creation
+4. Resume from that phase only; do not restart completed phases.
+5. Route to the corresponding role agent and request only phase-appropriate output.
+6. At each phase end, provide a short handoff packet:
    - Completed items
    - Evidence links (files/tests)
    - Open questions and blockers
    - Next agent and expected output
+
+Phase 0: Git Branch Creation (for new features only)
+- Check current branch: `git branch --show-current`
+- If on `main` and no feature branch exists: create `feature/{feature-name}` branch
+- All subsequent work happens in the feature branch
+- Skip this phase if already on a feature branch or resuming existing work
+
+Phase 4: Completion Reporting + Pull Request
+- `reviewer` agent generates completion report
+- After completion report, create PR from feature branch to `main`:
+  - PR title: "Feature: {Feature Name}"
+  - PR description: Full Phase 4 completion report
+  - Labels: `feature`, `ready-for-review`
+- Provide PR link and merge instructions in final output
 
 QA decision branch:
 
