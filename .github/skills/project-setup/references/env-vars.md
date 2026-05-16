@@ -8,13 +8,15 @@ Create this file if it doesn't exist:
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/gregmd
-OPENAI_API_KEY=sk-...your-key-here...
+GOOGLE_API_KEY=AIzaSy...your-key-here...
+GEMINI_MODEL=gemini-2.5-flash
 API_HOST=0.0.0.0
 API_PORT=8089
 ```
 
 - `DATABASE_URL`: Must match the Docker Compose PostgreSQL config (user: `postgres`, password: `postgres`, db: `gregmd`, port: `5432`)
-- `OPENAI_API_KEY`: Required for LLM-based biomarker extraction. Tests that mock the LLM do not need this, but the running app does.
+- `GOOGLE_API_KEY`: Required for Gemini LLM-based biomarker extraction. Tests that mock the LLM do not need this, but the running app does.
+- `GEMINI_MODEL`: The Gemini model to use for extraction (default: `gemini-2.5-flash` - stable). Other stable options: `gemini-2.5-pro` (most advanced), `gemini-2.5-flash-lite` (fastest/cheapest), `gemini-3.1-flash-lite`. Preview options: `gemini-3.1-pro-preview`, `gemini-3-flash-preview`.
 
 ## Frontend: `src/frontend/.env.local`
 

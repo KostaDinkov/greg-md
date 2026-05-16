@@ -103,4 +103,4 @@ Edge cases: Low/Medium defects that don't block core functionality can be GO wit
 - **Health endpoint**: Use `/api/v1/health` for the backend, not `/health` (the root path may serve a different service).
 - **Port 8089 conflict**: Other Docker containers (e.g., BakeryOps) may occupy port 8089. Run `docker ps --filter "publish=8089"` if the health check fails unexpectedly.
 - **Database state**: Backend tests use in-memory SQLite. E2E tests hit the real PostgreSQL. A fresh E2E run may behave differently if the database has leftover data.
-- **OpenAI key required**: Extraction tests that call the LLM need `OPENAI_API_KEY` set. Tests that mock the LLM do not.
+- **Google API key required**: Extraction tests that call the LLM need `GOOGLE_API_KEY` set. Tests that mock the LLM do not.

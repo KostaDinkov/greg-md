@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     test_mode: bool = os.getenv("TEST_MODE", "false").lower() == "true"
 
     # AI settings
-    openai_api_key: str | None = None
-    anthropic_api_key: str | None = None
+    google_api_key: str | None = None
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     use_dummy_llm: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
