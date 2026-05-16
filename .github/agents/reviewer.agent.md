@@ -4,7 +4,8 @@ description: Produce final completion report and PR-ready summary based on verif
 model: Claude Sonnet 4.5 (copilot)
 tools:
   - read
-  - search/changes
+  - edit
+  - search
   - search/codebase
   - search/textSearch
   - web/fetch
@@ -23,10 +24,22 @@ Goals:
 
 Required outputs:
 
-- Completion report.
-- Residual risks and limitations.
-- Manual verification steps.
-- PR summary draft.
+- Completion report (saved to `specs/features/{feature-name}/completion-report.md`)
+- Residual risks and limitations (included in completion report)
+- Manual verification steps (included in completion report)
+- PR summary draft (saved to `specs/features/{feature-name}/PR-SUMMARY.md`)
+
+**File Creation Instructions:**
+
+Use the `create_file` tool to save all reports:
+
+1. **Completion Report:** Save to `specs/features/{feature-name}/completion-report.md`
+   - Include: Executive summary, what was implemented, what was tested, AC status, defects resolved, residual risks, manual verification steps
+
+2. **PR Summary:** Save to `specs/features/{feature-name}/PR-SUMMARY.md`
+   - Include: Feature description, technical implementation, files changed, testing metrics, before/after comparison, known issues, merge checklist
+
+After saving each file, confirm the path and notify the user.
 
 Completion gate:
 

@@ -103,6 +103,8 @@ export function UploadLabForm() {
               accept=".pdf"
               onChange={handleFileChange}
               disabled={isUploading || status === "processing"}
+              aria-label="Upload lab report PDF file"
+              id="lab-report-upload"
             />
             <Button
               onClick={handleUpload}

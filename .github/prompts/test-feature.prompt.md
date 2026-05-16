@@ -66,9 +66,11 @@ Return the complete QA report.
 
 The agent will use `.github/skills/test-feature.skill.md` for detailed procedures.
 
-### 4. Save QA Report
+### 4. Save QA Report (if invoked standalone)
 
-Take the report from qa-validator and save it:
+**Note:** The qa-validator agent now has file writing capabilities and can save its own report. This step is only needed when this prompt orchestrates standalone testing (e.g., `/test-feature`).
+
+If the agent returns a report but hasn't saved it yet, save it:
 
 **Path:** `specs/features/{feature-name}/qa-reports/{YYYY-MM-DD-HHMM}-qa-report.md`
 
@@ -78,6 +80,8 @@ Take the report from qa-validator and save it:
 2. Create directory if doesn't exist: `specs/features/{feature-name}/qa-reports/`
 3. Write report to file
 4. Capture file path for user output
+
+**If agent already saved the report:** Skip this step and use the path from the agent's output.
 
 ### 5. Display Summary to User
 
@@ -167,12 +171,13 @@ Once services are running, retry: /test-feature {feature-name}
 ```
 
 **From orchestrator:**
-At Phase 3 completion, orchestrator can invoke qa-validator agent directly. The agent will use the test-feature skill. This prompt is for user-facing standalone testing.
+At Phase 3 completion, orchestrator can invoke qa-validator agent directly. The agent will use the test-feature skill and save its own report using its file writing tools.
 
 **Key difference:**
 
-- Standalone: This prompt does pre-flight + invoke agent + save report
-- Orchestrator: Calls qa-validator directly, handles report saving itself
+- Standalone: This prompt does pre-flight + invoke agent + save report (if needed)
+- Orchestrator: Calls qa-validator directly, agent saves its own report
+- Agent: Now has `write/createFile` tool and can save reports autonomously
 
 ---
 

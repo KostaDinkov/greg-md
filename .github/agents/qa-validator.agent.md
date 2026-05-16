@@ -5,6 +5,7 @@ model: Claude Sonnet 4.5 (copilot)
 tools:
   - read
   - search
+  - edit
   - execute/runInTerminal
   - execute/runTests
   - execute/getTerminalOutput

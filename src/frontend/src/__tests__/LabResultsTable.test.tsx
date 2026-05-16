@@ -253,9 +253,14 @@ describe("LabResultsTable", () => {
       dateHeader.click();
     }
 
+    // Wait for sort to take effect
+    await waitFor(() => {
+      const rows = container.querySelectorAll("tbody tr");
+      expect(rows[0]).toHaveTextContent("Jan 15, 2024");
+    });
+
     // Verify order: oldest first (2024-01-15 before 2024-02-20)
     const rows = container.querySelectorAll("tbody tr");
-    expect(rows[0]).toHaveTextContent("Jan 15, 2024");
     expect(rows[2]).toHaveTextContent("Feb 20, 2024");
   });
 
@@ -320,9 +325,14 @@ describe("LabResultsTable", () => {
       valueHeader.click();
     }
 
+    // Wait for sort to take effect
+    await waitFor(() => {
+      const rows = container.querySelectorAll("tbody tr");
+      expect(rows[0]).toHaveTextContent("Hemoglobin"); // 15.5
+    });
+
     // Verify numeric order: 15.5, 22, 95
     const rows = container.querySelectorAll("tbody tr");
-    expect(rows[0]).toHaveTextContent("Hemoglobin"); // 15.5
     expect(rows[1]).toHaveTextContent("Vitamin D"); // 22
     expect(rows[2]).toHaveTextContent("Glucose"); // 95
   });
@@ -345,18 +355,25 @@ describe("LabResultsTable", () => {
       biomarkerHeader.click();
     }
 
-    // Verify ascending order
-    let rows = container.querySelectorAll("tbody tr");
-    expect(rows[0]).toHaveTextContent("Glucose");
+    // Wait for first sort to take effect
+    await waitFor(() => {
+      const rows = container.querySelectorAll("tbody tr");
+      expect(rows[0]).toHaveTextContent("Glucose");
+    });
 
     // Click again for descending sort
     if (biomarkerHeader) {
       biomarkerHeader.click();
     }
 
+    // Wait for second sort to take effect
+    await waitFor(() => {
+      const rows = container.querySelectorAll("tbody tr");
+      expect(rows[0]).toHaveTextContent("Vitamin D");
+    });
+
     // Verify descending order
-    rows = container.querySelectorAll("tbody tr");
-    expect(rows[0]).toHaveTextContent("Vitamin D");
+    const rows = container.querySelectorAll("tbody tr");
     expect(rows[2]).toHaveTextContent("Glucose");
   });
 

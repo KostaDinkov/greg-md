@@ -4,6 +4,8 @@ description: Analyze feature intent and produce clear, testable specs and accept
 model: Claude Sonnet 4.5 (copilot)
 tools:
   - read
+  - write/createFile
+  - write/replaceStringInFile
   - search
   - web/fetch
   - vscode/askQuestions

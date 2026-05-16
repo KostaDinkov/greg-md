@@ -72,8 +72,20 @@ Severity rules (quick reference):
 
 Use the template in `assets/qa-report-template.md`. Fill in all sections — do not omit any.
 
-Save the completed report to:
-`specs/features/{feature-name}/qa-reports/{YYYY-MM-DD-HHMM}-qa-report.md`
+**Save the completed report:**
+
+1. Create the qa-reports directory if it doesn't exist:
+
+   ```powershell
+   New-Item -ItemType Directory -Force -Path "specs/features/{feature-name}/qa-reports"
+   ```
+
+2. Use the `create_file` tool to write the report:
+   - **File path:** `specs/features/{feature-name}/qa-reports/{YYYY-MM-DD-HHMM}-qa-report.md`
+   - **Format:** Use current date/time in format `2026-05-16-1704` (YYYY-MM-DD-HHMM)
+   - **Content:** Complete QA report based on template with all sections filled
+
+3. Confirm file creation and report the saved path to the user
 
 ## Go/No-Go Decision
 
