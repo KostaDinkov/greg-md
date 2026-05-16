@@ -5,23 +5,26 @@ Complete test coverage for the Lab Extraction feature.
 ## Test Structure
 
 ```
-src/tests/
-├── backend/           # Backend Python tests (pytest)
-│   ├── test_api.py              # API endpoint tests
-│   ├── test_extraction_agent.py # AI extraction tests
-│   ├── test_pdf_service.py      # PDF parsing tests
-│   ├── conftest.py              # Test configuration
-│   └── __init__.py
-├── frontend/          # Frontend React tests (Jest)
-│   ├── UploadLabForm.test.tsx
-│   ├── LabResultsTable.test.tsx
-│   └── BiomarkerChart.test.tsx
-├── e2e/               # End-to-end tests (Playwright)
-│   └── lab_upload_flow.spec.ts
-└── fixtures/          # Test data and sample files
-    ├── sample-lab-report.pdf    # Generated test PDF
-    ├── generate_sample_pdf.py   # PDF generator script
-    └── README.md
+src/
+├── backend/
+│   └── __tests__/     # Backend Python tests (pytest)
+│       ├── test_api.py              # API endpoint tests
+│       ├── test_extraction_agent.py # AI extraction tests
+│       ├── conftest.py              # Test configuration
+│       └── __init__.py
+├── frontend/
+│   └── src/
+│       └── __tests__/ # Frontend React tests (Jest)
+│           ├── UploadLabForm.test.tsx
+│           ├── LabResultsTable.test.tsx
+│           ├── BiomarkerChart.test.tsx
+│           └── e2e/   # End-to-end tests (Playwright)
+│               └── lab_upload_flow.spec.ts
+└── tests/
+    └── fixtures/      # Test data and sample files
+        ├── sample-lab-report.pdf    # Generated test PDF
+        ├── generate_sample_pdf.py   # PDF generator script
+        └── README.md
 ```
 
 ## Quick Start
@@ -31,7 +34,7 @@ src/tests/
 ```bash
 cd src/backend
 python -m pip install -r requirements.txt
-python -m pytest ../tests/backend/ -v
+python -m pytest __tests__/ -v
 ```
 
 **Expected:** 30 tests passing

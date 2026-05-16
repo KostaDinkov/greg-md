@@ -113,13 +113,14 @@ class TestDummyExtraction:
         assert result.lab_name == "Demo Diagnostics"
 
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._extraction_agent.run_sync")
+    @patch("services.extraction_agent._get_extraction_agent")
     def test_extract_from_pdf_calls_llm_when_flag_is_false(
-        self, mock_run_sync, mock_settings
+        self, mock_get_agent, mock_settings
     ):
         """Test that extract_from_pdf calls the LLM agent when use_dummy_llm=False."""
         mock_settings.use_dummy_llm = False
 
+        mock_agent = Mock()
         mock_result = Mock()
         mock_result.data = LabExtractionResponse(
             test_date=date(2024, 1, 15),
@@ -134,20 +135,21 @@ class TestDummyExtraction:
                 )
             ],
         )
-        mock_run_sync.return_value = mock_result
+        mock_agent.run_sync.return_value = mock_result
+        mock_get_agent.return_value = mock_agent
 
         pdf_bytes = b"%PDF-1.4 fake pdf content"
         result = extract_from_pdf(pdf_bytes)
 
-        mock_run_sync.assert_called_once()
+        mock_agent.run_sync.assert_called_once()
         assert result.lab_name == "LabCorp"
         assert len(result.results) == 1
         assert result.results[0].name == "Hemoglobin"
 
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._extraction_agent.run_sync")
+    @patch("services.extraction_agent._get_extraction_agent")
     def test_extract_from_pdf_does_not_call_llm_in_dummy_mode(
-        self, mock_run_sync, mock_settings
+        self, mock_get_agent, mock_settings
     ):
         """Test that the real LLM agent is never called when use_dummy_llm=True."""
         mock_settings.use_dummy_llm = True
@@ -155,18 +157,20 @@ class TestDummyExtraction:
         pdf_bytes = b"%PDF-1.4 fake pdf content"
         extract_from_pdf(pdf_bytes)
 
-        mock_run_sync.assert_not_called()
+        mock_get_agent.assert_not_called()
 
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._extraction_agent.run_sync")
+    @patch("services.extraction_agent._get_extraction_agent")
     def test_extract_from_pdf_propagates_llm_errors(
-        self, mock_run_sync, mock_settings
+        self, mock_get_agent, mock_settings
     ):
         """Test that LLM errors propagate correctly when not in dummy mode."""
         mock_settings.use_dummy_llm = False
-        mock_run_sync.side_effect = Exception("LLM API error")
+
+        mock_agent = Mock()
+        mock_agent.run_sync.side_effect = Exception("LLM API error")
+        mock_get_agent.return_value = mock_agent
 
         pdf_bytes = b"%PDF-1.4 fake pdf content"
         with pytest.raises(Exception, match="LLM API error"):
             extract_from_pdf(pdf_bytes)
-

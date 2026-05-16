@@ -2,7 +2,7 @@ import os
 from datetime import date
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, BinaryContent
-from pydantic_ai.models.gemini import GeminiChatModel
+from pydantic_ai.models.google import GoogleModel
 from database import settings
 
 
@@ -63,23 +63,31 @@ def _dummy_extraction_response() -> LabExtractionResponse:
 
 
 if settings.google_api_key:
-    os.environ["GOOGLE_API_KEY"] = settings.google_api_key
-else:
-    os.environ["GOOGLE_API_KEY"] = "dummy-configure-key"
+    os.environ["GEMINI_API_KEY"] = settings.google_api_key
 
-_model = GeminiChatModel(settings.gemini_model)
+_model = None
+_extraction_agent = None
 
-_extraction_agent = Agent(
-    _model,
-    output_type=LabExtractionResponse,
-    system_prompt=(
-        "You are an expert medical data extractor. "
-        "You will receive a PDF lab report document. "
-        "Extract the date of the test and all lab results from the document. "
-        "Map them exactly to the provided schema. Do not invent data. "
-        "If a unit is missing, try to infer it from standard labs, but prefer null/empty string if unsure."
-    ),
-)
+
+def _get_extraction_agent() -> Agent:
+    """Lazy-load the extraction agent to avoid initialization errors during import."""
+    global _model, _extraction_agent
+    
+    if _extraction_agent is None:
+        _model = GoogleModel(settings.gemini_model)
+        _extraction_agent = Agent(
+            _model,
+            output_type=LabExtractionResponse,
+            system_prompt=(
+                "You are an expert medical data extractor. "
+                "You will receive a PDF lab report document. "
+                "Extract the date of the test and all lab results from the document. "
+                "Map them exactly to the provided schema. Do not invent data. "
+                "If a unit is missing, try to infer it from standard labs, but prefer null/empty string if unsure."
+            ),
+        )
+    
+    return _extraction_agent
 
 
 def extract_from_pdf(pdf_bytes: bytes) -> LabExtractionResponse:
@@ -91,7 +99,8 @@ def extract_from_pdf(pdf_bytes: bytes) -> LabExtractionResponse:
     if settings.use_dummy_llm:
         return _dummy_extraction_response()
 
-    result = _extraction_agent.run_sync(
+    agent = _get_extraction_agent()
+    result = agent.run_sync(
         [BinaryContent(data=pdf_bytes, media_type="application/pdf")]
     )
     return result.data

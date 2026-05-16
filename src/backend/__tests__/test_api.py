@@ -11,7 +11,7 @@ import io
 from main import app
 from database import get_session
 from models import LabReport, LabResult
-from services.extraction_agent import LabExtractionResponse, BiomarkerResult, extract_from_pdf
+from services.extraction_agent import LabExtractionResponse, BiomarkerResult
 
 
 @pytest.fixture(name="session")
