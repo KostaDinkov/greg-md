@@ -99,78 +99,88 @@ class TestDummyExtraction:
             assert biomarker.value is not None
             assert biomarker.unit
 
+    @pytest.mark.asyncio
     @patch("services.extraction_agent.settings")
-    def test_extract_from_pdf_uses_dummy_when_flag_is_true(self, mock_settings):
+    async def test_extract_from_pdf_uses_dummy_when_flag_is_true(self, mock_settings):
         """Test that extract_from_pdf returns dummy data when use_dummy_llm=True."""
         mock_settings.use_dummy_llm = True
         pdf_bytes = b"%PDF-1.4 fake pdf content"
 
-        result = extract_from_pdf(pdf_bytes)
+        result = await extract_from_pdf(pdf_bytes)
 
         assert isinstance(result, LabExtractionResponse)
         assert len(result.results) > 0
         # Verify no real LLM was called by checking known dummy values
         assert result.lab_name == "Demo Diagnostics"
 
+    @pytest.mark.asyncio
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._get_extraction_agent")
-    def test_extract_from_pdf_calls_llm_when_flag_is_false(
-        self, mock_get_agent, mock_settings
+    @patch("services.extraction_agent._get_genai_client")
+    async def test_extract_from_pdf_calls_llm_when_flag_is_false(
+        self, mock_get_client, mock_settings
     ):
-        """Test that extract_from_pdf calls the LLM agent when use_dummy_llm=False."""
+        """Test that extract_from_pdf calls the LLM API when use_dummy_llm=False."""
         mock_settings.use_dummy_llm = False
 
-        mock_agent = Mock()
-        mock_result = Mock()
-        mock_result.data = LabExtractionResponse(
-            test_date=date(2024, 1, 15),
-            lab_name="LabCorp",
-            results=[
-                BiomarkerResult(
-                    name="Hemoglobin",
-                    value=15.5,
-                    unit="g/dL",
-                    reference_range="13.5-17.5",
-                    is_flagged=False,
-                )
-            ],
-        )
-        mock_agent.run_sync.return_value = mock_result
-        mock_get_agent.return_value = mock_agent
+        # Mock the client and response
+        mock_client = Mock()
+        mock_aio = Mock()
+        mock_models = Mock()
+        mock_response = Mock()
+        mock_response.text = '{"test_date": "2024-01-15", "lab_name": "LabCorp", "results": [{"name": "Hemoglobin", "value": 15.5, "unit": "g/dL", "reference_range": "13.5-17.5", "is_flagged": false}]}'
+
+        # Set up the async mock chain
+        async def mock_generate(*args, **kwargs):
+            return mock_response
+
+        mock_models.generate_content = mock_generate
+        mock_aio.models = mock_models
+        mock_client.aio = mock_aio
+        mock_get_client.return_value = mock_client
 
         pdf_bytes = b"%PDF-1.4 fake pdf content"
-        result = extract_from_pdf(pdf_bytes)
+        result = await extract_from_pdf(pdf_bytes)
 
-        mock_agent.run_sync.assert_called_once()
         assert result.lab_name == "LabCorp"
         assert len(result.results) == 1
         assert result.results[0].name == "Hemoglobin"
 
+    @pytest.mark.asyncio
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._get_extraction_agent")
-    def test_extract_from_pdf_does_not_call_llm_in_dummy_mode(
-        self, mock_get_agent, mock_settings
+    @patch("services.extraction_agent._get_genai_client")
+    async def test_extract_from_pdf_does_not_call_llm_in_dummy_mode(
+        self, mock_get_client, mock_settings
     ):
-        """Test that the real LLM agent is never called when use_dummy_llm=True."""
+        """Test that the real LLM client is never called when use_dummy_llm=True."""
         mock_settings.use_dummy_llm = True
 
         pdf_bytes = b"%PDF-1.4 fake pdf content"
-        extract_from_pdf(pdf_bytes)
+        await extract_from_pdf(pdf_bytes)
 
-        mock_get_agent.assert_not_called()
+        mock_get_client.assert_not_called()
 
+    @pytest.mark.asyncio
     @patch("services.extraction_agent.settings")
-    @patch("services.extraction_agent._get_extraction_agent")
-    def test_extract_from_pdf_propagates_llm_errors(
-        self, mock_get_agent, mock_settings
+    @patch("services.extraction_agent._get_genai_client")
+    async def test_extract_from_pdf_propagates_llm_errors(
+        self, mock_get_client, mock_settings
     ):
         """Test that LLM errors propagate correctly when not in dummy mode."""
         mock_settings.use_dummy_llm = False
 
-        mock_agent = Mock()
-        mock_agent.run_sync.side_effect = Exception("LLM API error")
-        mock_get_agent.return_value = mock_agent
+        # Mock the client to raise an error
+        mock_client = Mock()
+        mock_aio = Mock()
+        mock_models = Mock()
+
+        async def mock_generate_error(*args, **kwargs):
+            raise Exception("LLM API error")
+
+        mock_models.generate_content = mock_generate_error
+        mock_aio.models = mock_models
+        mock_client.aio = mock_aio
+        mock_get_client.return_value = mock_client
 
         pdf_bytes = b"%PDF-1.4 fake pdf content"
         with pytest.raises(Exception, match="LLM API error"):
-            extract_from_pdf(pdf_bytes)
+            await extract_from_pdf(pdf_bytes)

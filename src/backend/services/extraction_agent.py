@@ -1,8 +1,8 @@
 import os
 from datetime import date
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, BinaryContent
-from pydantic_ai.models.google import GoogleModel
+from google import genai
+from google.genai.types import GenerateContentConfig, Part
 from database import settings
 
 
@@ -62,35 +62,22 @@ def _dummy_extraction_response() -> LabExtractionResponse:
     )
 
 
-if settings.google_api_key:
-    os.environ["GEMINI_API_KEY"] = settings.google_api_key
-
-_model = None
-_extraction_agent = None
+_genai_client = None
 
 
-def _get_extraction_agent() -> Agent:
-    """Lazy-load the extraction agent to avoid initialization errors during import."""
-    global _model, _extraction_agent
-    
-    if _extraction_agent is None:
-        _model = GoogleModel(settings.gemini_model)
-        _extraction_agent = Agent(
-            _model,
-            output_type=LabExtractionResponse,
-            system_prompt=(
-                "You are an expert medical data extractor. "
-                "You will receive a PDF lab report document. "
-                "Extract the date of the test and all lab results from the document. "
-                "Map them exactly to the provided schema. Do not invent data. "
-                "If a unit is missing, try to infer it from standard labs, but prefer null/empty string if unsure."
-            ),
-        )
-    
-    return _extraction_agent
+def _get_genai_client() -> genai.Client:
+    """Lazy-load the Gen AI client to avoid initialization errors during import."""
+    global _genai_client
+
+    if _genai_client is None:
+        if settings.google_api_key:
+            os.environ["GOOGLE_API_KEY"] = settings.google_api_key
+        _genai_client = genai.Client()
+
+    return _genai_client
 
 
-def extract_from_pdf(pdf_bytes: bytes) -> LabExtractionResponse:
+async def extract_from_pdf(pdf_bytes: bytes) -> LabExtractionResponse:
     """Extract structured lab results from raw PDF bytes.
 
     When USE_DUMMY_LLM is enabled, returns a hardcoded response without calling the LLM.
@@ -99,8 +86,48 @@ def extract_from_pdf(pdf_bytes: bytes) -> LabExtractionResponse:
     if settings.use_dummy_llm:
         return _dummy_extraction_response()
 
-    agent = _get_extraction_agent()
-    result = agent.run_sync(
-        [BinaryContent(data=pdf_bytes, media_type="application/pdf")]
+    client = _get_genai_client()
+
+    # Create the system prompt
+    system_instruction = (
+        "You are an expert medical data extractor. "
+        "You will receive a PDF lab report document. "
+        "Extract the date of the test and all lab results from the document. "
+        "Return the data as JSON with this exact schema:\n"
+        "{\n"
+        '  "test_date": "YYYY-MM-DD",\n'
+        '  "lab_name": "Laboratory Name or null",\n'
+        '  "results": [\n'
+        "    {\n"
+        '      "name": "Biomarker name",\n'
+        '      "value": numeric_value,\n'
+        '      "unit": "unit of measurement",\n'
+        '      "reference_range": "range or null",\n'
+        '      "is_flagged": true/false/null\n'
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "Do not invent data. If a unit is missing, try to infer it from standard labs, "
+        "but prefer null if unsure."
     )
-    return result.data
+
+    # Call the API with the PDF
+    response = await client.aio.models.generate_content(
+        model=settings.gemini_model,
+        contents=[
+            system_instruction,
+            Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+        ],
+        config=GenerateContentConfig(
+            temperature=0.1,
+            response_mime_type="application/json",
+        ),
+    )
+
+    # Parse the JSON response
+    import json
+
+    result_data = json.loads(response.text)
+
+    # Convert to our Pydantic model
+    return LabExtractionResponse(**result_data)

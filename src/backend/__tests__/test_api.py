@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 import io
 
 from main import app
@@ -66,7 +66,7 @@ class TestHealthEndpoint:
 class TestUploadEndpoint:
     """Test the POST /api/v1/labs/upload endpoint."""
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_upload_pdf_success(
         self, mock_extract, client: TestClient, session: Session
     ):
@@ -120,7 +120,7 @@ class TestUploadEndpoint:
 
         assert response.status_code == 422  # Unprocessable Entity
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_upload_extraction_failure(
         self, mock_extract, client: TestClient, session: Session
     ):
@@ -275,7 +275,7 @@ class TestResultsEndpoint:
 class TestDatabasePersistence:
     """Test that extracted data is correctly persisted to the database."""
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_database_persistence_after_extraction(
         self, mock_extract, client: TestClient, session: Session
     ):
@@ -315,7 +315,7 @@ class TestDatabasePersistence:
 class TestErrorHandling:
     """Test error handling and polite error messages."""
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_upload_malformed_pdf_stores_error_message(
         self, mock_extract, client: TestClient, session: Session
     ):
@@ -348,7 +348,7 @@ class TestErrorHandling:
         assert "couldn't find any lab results" in report.error_message
         assert "medical lab report" in report.error_message
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_pdf_parsing_error_stores_polite_message(
         self, mock_extract, client: TestClient, session: Session
     ):
@@ -376,7 +376,7 @@ class TestErrorHandling:
         assert report.error_message is not None
         assert "trouble processing" in report.error_message
 
-    @patch("main.extract_from_pdf")
+    @patch("main.extract_from_pdf", new_callable=AsyncMock)
     def test_generic_extraction_failure_stores_polite_message(
         self, mock_extract, client: TestClient, session: Session
     ):

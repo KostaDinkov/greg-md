@@ -47,7 +47,7 @@ async def reset_test_database(session: Session = Depends(get_session)):
 async def process_lab_report(report_id: int, file_bytes: bytes, session: Session):
     report = session.get(LabReport, report_id)
     try:
-        extraction_data = extract_from_pdf(file_bytes)
+        extraction_data = await extract_from_pdf(file_bytes)
 
         # Check if we got any results
         if not extraction_data.results or len(extraction_data.results) == 0:
@@ -76,9 +76,15 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
     except Exception as e:
         if report:
             report.status = "failed"
+            # Log the actual error for debugging
+            import logging
+
+            logging.error(
+                f"Extraction failed for report {report_id}: {e}", exc_info=True
+            )
+            # Still show a user-friendly message to the frontend
             report.error_message = "We had trouble processing this report. Please ensure it contains standard lab test results."
             session.commit()
-        print(f"Extraction failed for report {report_id}: {e}")
 
 
 @app.post("/api/v1/labs/upload")
