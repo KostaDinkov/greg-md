@@ -1,13 +1,17 @@
 {
-    "python.defaultInterpreterPath": "src/backend/.venv/Scripts/python.exe",
-    "python.analysis.extraPaths": [
-        "src/backend"
-    ],
-    "python.autoComplete.extraPaths": [
-        "src/backend"
-    ],
-    "python.envFile": "${workspaceFolder}/src/backend/.env",
-    "terminal.integrated.env.windows": {
-        "PYTHONPATH": "${workspaceFolder}\\src\\backend"
-    }
+  "python.defaultInterpreterPath": "src/backend/.venv/Scripts/python.exe",
+  "python.analysis.extraPaths": ["src/backend"],
+  "python.autoComplete.extraPaths": ["src/backend"],
+  "python.envFile": "${workspaceFolder}/src/backend/.env",
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}\\src\\backend"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  "hide-files.files": []
 }

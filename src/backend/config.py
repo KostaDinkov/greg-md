@@ -4,7 +4,7 @@ import os
 class Settings(BaseSettings):
     # API settings
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
-    api_port: int = int(os.getenv("API_PORT", "8000"))
+    api_port: int = int(os.getenv("API_PORT", "8089"))
     
     # Database settings
     database_url: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/gregmd")
