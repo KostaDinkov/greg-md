@@ -12,6 +12,9 @@ class Settings(BaseSettings):
         "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/gregmd"
     )
 
+    # Test mode settings
+    test_mode: bool = os.getenv("TEST_MODE", "false").lower() == "true"
+
     # AI settings
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None

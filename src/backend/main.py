@@ -7,6 +7,7 @@ from database import get_session
 from config import settings
 from models import LabReport, LabResult
 from services.extraction_agent import extract_from_pdf
+from test_utils import reset_database
 
 app = FastAPI(title="GregMD API")
 
@@ -26,6 +27,21 @@ app.add_middleware(
 @app.get("/api/v1/health")
 async def health_check():
     return {"status": "ok"}
+
+
+@app.delete("/api/v1/test/reset-db")
+async def reset_test_database(session: Session = Depends(get_session)):
+    """
+    Reset the database for test isolation.
+    Only available when TEST_MODE is enabled.
+    """
+    if not settings.test_mode:
+        raise HTTPException(
+            status_code=403, detail="Database reset is only available in test mode"
+        )
+
+    reset_database(session)
+    return {"status": "ok", "message": "Database reset successfully"}
 
 
 async def process_lab_report(report_id: int, file_bytes: bytes, session: Session):

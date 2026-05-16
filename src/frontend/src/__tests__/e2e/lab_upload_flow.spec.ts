@@ -11,7 +11,10 @@ import fs from "fs";
  */
 
 test.describe("Lab Upload Flow", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    // Reset database for test isolation
+    await request.delete("http://localhost:8000/api/v1/test/reset-db");
+
     // Navigate to the dashboard
     await page.goto("/");
     await expect(page.getByText("GregMD Dashboard")).toBeVisible();
@@ -38,7 +41,7 @@ test.describe("Lab Upload Flow", () => {
     await fileInput.setInputFiles(samplePdfPath);
 
     // Step 4: Click the upload button
-    const uploadButton = page.getByRole("button", { name: /upload/i });
+    const uploadButton = page.getByRole("button").filter({ hasText: "Upload" });
     await expect(uploadButton).toBeEnabled();
     await uploadButton.click();
 
@@ -61,11 +64,11 @@ test.describe("Lab Upload Flow", () => {
     await expect(tableRows).not.toHaveCount(0);
 
     // Verify table columns are present
-    await expect(page.getByText("Date")).toBeVisible();
-    await expect(page.getByText("Biomarker")).toBeVisible();
-    await expect(page.getByText("Value")).toBeVisible();
-    await expect(page.getByText("Range")).toBeVisible();
-    await expect(page.getByText("Status")).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Date" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Biomarker" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Value" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Range" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Status" })).toBeVisible();
 
     // Step 8: Verify chart renders
     await expect(page.getByText("Biomarker Trends")).toBeVisible();
@@ -98,7 +101,7 @@ test.describe("Lab Upload Flow", () => {
       buffer: buffer,
     });
 
-    const uploadButton = page.getByRole("button", { name: /upload/i });
+    const uploadButton = page.getByRole("button").filter({ hasText: "Upload" });
     await expect(uploadButton).toBeEnabled();
     await uploadButton.click();
 
@@ -117,7 +120,7 @@ test.describe("Lab Upload Flow", () => {
   });
 
   test("upload button is disabled when no file selected", async ({ page }) => {
-    const uploadButton = page.getByRole("button", { name: /upload/i });
+    const uploadButton = page.getByRole("button").filter({ hasText: "Upload" });
     await expect(uploadButton).toBeDisabled();
   });
 
