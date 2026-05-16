@@ -1,5 +1,6 @@
 import { UploadLabForm } from "@/components/UploadLabForm";
 import { LabResultsTable } from "@/components/LabResultsTable";
+import { BiomarkerChart } from "@/components/BiomarkerChart";
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
           {/* Results Section */}
           <div className="md:col-span-2 space-y-8">
             <LabResultsTable />
+            <BiomarkerChart />
           </div>
         </div>
       </div>

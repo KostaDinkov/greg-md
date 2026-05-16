@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +10,45 @@ import { API_BASE_URL } from "@/lib/api";
 export function UploadLabForm() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [reportId, setReportId] = useState<number | null>(null);
+
+  // Poll status endpoint after upload
+  useEffect(() => {
+    if (reportId === null || status === "success" || status === "error") {
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/labs/${reportId}/status`);
+        const data = await response.json();
+
+        if (data.status === "complete") {
+          setStatus("success");
+          setMessage("Lab report extracted successfully! View your results below.");
+          setReportId(null);
+          // Trigger a page refresh or results reload
+          window.dispatchEvent(new Event("lab-results-updated"));
+        } else if (data.status === "failed") {
+          setStatus("error");
+          setMessage(data.error_message || "Extraction failed. Please try again.");
+          setReportId(null);
+        }
+      } catch (error) {
+        console.error("Error polling status:", error);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [reportId, status]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setStatus("idle");
+      setMessage("");
     }
   };
 
@@ -38,9 +70,9 @@ export function UploadLabForm() {
       const data = await response.json();
 
       if (response.ok) {
-        setStatus("success");
-        setMessage("File uploaded successfully! Extraction is processing.");
-        // In a real app, we would poll the status endpoint here
+        setStatus("processing");
+        setMessage("File uploaded successfully! Extracting lab results...");
+        setReportId(data.report_id);
       } else {
         setStatus("error");
         setMessage(data.detail || "Upload failed");
@@ -66,14 +98,14 @@ export function UploadLabForm() {
               type="file" 
               accept=".pdf" 
               onChange={handleFileChange}
-              disabled={isUploading}
+              disabled={isUploading || status === "processing"}
             />
-            <Button onClick={handleUpload} disabled={!file || isUploading}>
-              {isUploading ? "Uploading..." : <><UploadCloud className="mr-2 h-4 w-4" /> Upload</>}
+            <Button onClick={handleUpload} disabled={!file || isUploading || status === "processing"}>
+              {isUploading ? "Uploading..." : status === "processing" ? "Processing..." : <><UploadCloud className="mr-2 h-4 w-4" /> Upload</>}
             </Button>
           </div>
           
-          {status === "success" && (
+          {(status === "success" || status === "processing") && (
             <div className="flex items-center text-sm text-green-600 bg-green-50 p-3 rounded-md">
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {message}

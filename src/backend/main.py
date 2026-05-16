@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from typing import List
 
 from database import get_session
-from .config import settings
+from config import settings
 from models import LabReport, LabResult
 from services.pdf_service import PDFService
 from services.extraction_agent import extraction_agent
@@ -24,6 +24,8 @@ async def health_check():
     return {"status": "ok"}
 
 async def process_lab_report(report_id: int, file_bytes: bytes, session: Session):
+    report = session.get(LabReport, report_id)
+    extraction_data = None
     try:
         # Extract text
         text = PDFService.extract_text_from_bytes(file_bytes)
@@ -32,6 +34,14 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
         # Using pydantic_ai Agent
         result = extraction_agent.run_sync(text)
         extraction_data = result.data
+        
+        # Check if we got any results
+        if not extraction_data.results or len(extraction_data.results) == 0:
+            if report:
+                report.status = "failed"
+                report.error_message = "We couldn't find any lab results in this document. Please ensure it's a medical lab report with biomarker data."
+                session.commit()
+            return
         
         # Save results to DB
         for item in extraction_data.results:
@@ -47,13 +57,17 @@ async def process_lab_report(report_id: int, file_bytes: bytes, session: Session
             session.add(lab_result)
         
         # Update report status
-        report = session.get(LabReport, report_id)
         report.status = "complete"
         session.commit()
     except Exception as e:
-        report = session.get(LabReport, report_id)
         if report:
             report.status = "failed"
+            # Determine appropriate error message based on exception type
+            error_str = str(e).lower()
+            if "pdf" in error_str and ("corrupt" in error_str or "parse" in error_str or "parsing" in error_str):
+                report.error_message = "This PDF appears to be corrupted or unreadable. Please try uploading a different version."
+            else:
+                report.error_message = "We had trouble processing this report. Please ensure it contains standard lab test results."
             session.commit()
         print(f"Extraction failed for report {report_id}: {e}")
 
@@ -84,7 +98,11 @@ async def get_lab_status(report_id: int, session: Session = Depends(get_session)
     report = session.get(LabReport, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    return {"report_id": report.id, "status": report.status}
+    return {
+        "report_id": report.id, 
+        "status": report.status,
+        "error_message": report.error_message
+    }
 
 @app.get("/api/v1/labs/results", response_model=List[LabResult])
 async def get_lab_results(session: Session = Depends(get_session)):

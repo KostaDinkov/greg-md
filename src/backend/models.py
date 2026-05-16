@@ -7,6 +7,7 @@ class LabReport(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     filename: str
     status: str = Field(default="processing")  # processing, complete, failed
+    error_message: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     results: List["LabResult"] = Relationship(back_populates="report")
 

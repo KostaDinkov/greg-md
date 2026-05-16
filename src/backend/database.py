@@ -1,5 +1,5 @@
 from sqlmodel import create_engine, Session
-from .config import settings
+from config import settings
 
 # Using standard synchronous psycopg2 for MVP ease, can switch to asyncpg later
 engine = create_engine(settings.database_url, echo=True)
